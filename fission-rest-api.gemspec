@@ -9,7 +9,8 @@ Gem::Specification.new do |s|
   s.homepage = 'http://github.com/heavywater/fission-rest-api'
   s.description = 'Fission REST API'
   s.require_path = 'lib'
-  s.add_dependency 'fission'
+#  s.add_dependency 'fission'
   s.add_dependency 'carnivore'
+  s.add_dependency 'carnivore-http'
   s.files = Dir['**/*']
 end

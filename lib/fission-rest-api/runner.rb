@@ -1,17 +1,19 @@
-require 'carnivore/runner'
+require 'carnivore'
+require 'carnivore-http'
+
+Dir.glob(File.join(File.dirname(__FILE__), 'api', '*.rb')).each do |path|
+  require "fission-rest-api/#{File.basename(path).sub('.rb', '')}"
+end
 
 Carnivore.configure do
 
-  Fission::RestApi.workers = Carnivore::Config.get(:workers, :rest_api)
-
-  http = Carnivore::Source.build(
-    :type => :http,
+  Carnivore::Source.build(
+    :type => :http_endpoints,
     :args => {
+      :name => :fission_rest_api,
       :bind => Carnivore::Config.get(:rest_api, :setup, :bind) || '0.0.0.0',
       :port => Carnivore::Config.get(:rest_api, :setup, :port) || 9876
     }
   )
-
-  http.add_callback(:rest_api, Fission::RestApi)
 
 end
