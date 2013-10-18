@@ -11,7 +11,7 @@ Carnivore::PointBuilder.define do
         :github => payload
       }
       debug "Processing payload: #{payload}"
-      Fission::Utils.transmit(:package_builder, payload)
+      Fission::Utils.transmit(:fission_package_builder, payload)
       msg[:message][:connection].respond :ok, 'Job submitted for build'
     rescue MultiJson::DecodeError
       error 'Failed to parse JSON from request'
