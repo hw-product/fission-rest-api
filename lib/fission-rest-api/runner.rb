@@ -1,8 +1,9 @@
 require 'carnivore'
 require 'carnivore-http'
+require 'carnivore-http/point_builder'
 
 Dir.glob(File.join(File.dirname(__FILE__), 'api', '*.rb')).each do |path|
-  require "fission-rest-api/#{File.basename(path).sub('.rb', '')}"
+  require "fission-rest-api/api/#{File.basename(path).sub('.rb', '')}"
 end
 
 Carnivore.configure do
