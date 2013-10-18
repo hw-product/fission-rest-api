@@ -2,16 +2,16 @@ require 'multi_json'
 
 Carnivore::PointBuilder.define do
 
-  post %r{/github-build/?}, :workers => Carnivore::Config.get(:rest_api, :workers, :git_build) || 1 do |msg|
+  post %r{/github-build/?}, :workers => Carnivore::Config.get(:fission, :workers, :git_build) || 1 do |msg|
     begin
-      payload = symbolize_hash(MultiJson.load(msg[:message][:request].body))
-      debug "Received build info: #{payload}"
+      payload = symbolize_hash(MultiJson.load(msg[:message][:body].to_s))
       payload = {
         :job => 'package_builder',
         :message_id => Celluloid.uuid,
         :github => payload
       }
-      Celluloid::Actor[:fission_package_builder].transmit(payload)
+      debug "Processing payload: #{payload}"
+      Fission::Utils.transmit(:fission_validator, payload)
       msg[:message][:connection].respond :ok, 'Job submitted for build'
     rescue MultiJson::DecodeError
       error 'Failed to parse JSON from request'
