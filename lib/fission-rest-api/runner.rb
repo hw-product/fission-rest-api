@@ -7,14 +7,12 @@ Dir.glob(File.join(File.dirname(__FILE__), 'api', '*.rb')).each do |path|
 end
 
 Carnivore.configure do
-
   Carnivore::Source.build(
     :type => :http_endpoints,
     :args => {
-      :name => :fission_rest_api,
+      :name => :rest_api,
       :bind => Carnivore::Config.get(:rest_api, :setup, :bind) || '0.0.0.0',
       :port => Carnivore::Config.get(:rest_api, :setup, :port) || 9876
     }
   )
-
 end
