@@ -3,7 +3,7 @@ require 'fission/utils'
 
 Carnivore::PointBuilder.define do
 
-  post %r{/github-commit/?}, :workers => Carnivore::Config.get(:fission, :workers, :git_build) || 1 do |msg|
+  post %r{/github-commit/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg|
     begin
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
       payload = MultiJson.load(msg[:message][:body])
