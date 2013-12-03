@@ -7,6 +7,13 @@ Carnivore::PointBuilder.define do
     begin
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
       payload = MultiJson.load(msg[:message][:body])
+      if(filter = msg[:message][:query][:pkgr_filter])
+        debug "Detected pkgr filter on #{msg} - #{filter}"
+        unless(File.join('refs/head', filter) == payload['ref'])
+          warn "Discarding #{msg} due to filter match failure. filter: #{filter} ref: #{payload['ref']}"
+          msg.confirm!(:response_body => 'Job discared due to filter')
+        end
+      end
       payload = Fission::Utils.new_payload(job_name, :github => payload)
       debug "Processing payload: #{payload}"
       Fission::Utils.transmit(job_name, payload)
