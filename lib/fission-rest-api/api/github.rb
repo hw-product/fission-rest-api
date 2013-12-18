@@ -6,7 +6,7 @@ Carnivore::PointBuilder.define do
   post %r{/github-commit/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg|
     begin
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
-      payload = MultiJson.load(msg[:message][:body])
+      payload = MultiJson.load(msg[:message][:query][:payload])
       if(filter = msg[:message][:query][:pkgr_filter])
         debug "Detected pkgr filter on #{msg} - #{filter}"
         unless(File.join('refs/head', filter) == payload['ref'])
