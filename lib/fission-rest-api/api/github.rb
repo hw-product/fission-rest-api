@@ -20,11 +20,13 @@ Carnivore::PointBuilder.define do
       Fission::Utils.transmit(job_name, payload)
       msg.confirm!(:response_body => 'Job submitted for build')
     rescue MultiJson::DecodeError
-      error 'Failed to parse JSON from request'
+      error "Failed to parse JSON from request (#{msg})"
+      debug "Invalid JSON (#{msg}): #{msg[:message][:query][:payload]}"
       msg.confirm!(:response_body => 'Invalid JSON data', :code => :bad_request)
     rescue => e
-      error "Unknown error: #{e.class}: #{e.message}"
-      debug "#{e.class}: #{e}\n#{e.backtrace.join("\n")}"
+      error "Unknown error (#{msg}): #{e.class}: #{e.message}"
+      debug "#{e.class} (#{msg}): #{e}\n#{e.backtrace.join("\n")}"
+      debug "Message contents (#{msg}): #{msg[:message]}"
       msg.confirm!(:response_body => 'Unexpected error encountered', :code => :internal_server_error)
     end
   end
