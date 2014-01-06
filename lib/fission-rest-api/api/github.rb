@@ -9,7 +9,7 @@ Carnivore::PointBuilder.define do
       payload = MultiJson.load(msg[:message][:query][:payload])
       if(filter = msg[:message][:query][:filter])
         debug "Detected pkgr filter on #{msg} - #{filter}"
-        unless(File.join('refs/head', filter) == payload['ref'])
+        unless(File.join('refs/heads', filter) == payload['ref'])
           warn "Discarding #{msg} due to filter match failure. filter: #{filter} ref: #{payload['ref']}"
           msg.confirm!(:response_body => 'Job discared due to filter')
           return # short circuit
