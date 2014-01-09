@@ -6,7 +6,7 @@ Carnivore::PointBuilder.define do
   post %r{/github-commit/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, *args|
     begin
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
-      payload = MultiJson.load(msg[:message][:query][:payload])
+      payload = MultiJson.load(msg[:message][:query][:payload] || msg[:message][:body])
       if(filter = msg[:message][:query][:filter])
         debug "Detected pkgr filter on #{msg} - #{filter}"
         unless(File.join('refs/heads', filter) == payload['ref'])
@@ -21,6 +21,9 @@ Carnivore::PointBuilder.define do
       msg.confirm!(:response_body => 'Job submitted for build')
     rescue MultiJson::DecodeError
       error "Failed to parse JSON from request (#{msg})"
+      debug "M: #{msg[:message].inspect}"
+      debug "B: #{msg[:message][:body]}"
+      debug "Q: #{msg[:message][:query]}"
       debug "Invalid JSON (#{msg}): #{msg[:message][:query][:payload]}"
       msg.confirm!(:response_body => 'Invalid JSON data', :code => :bad_request)
     rescue => e
