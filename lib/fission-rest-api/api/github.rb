@@ -14,6 +14,19 @@ Carnivore::PointBuilder.define do
           msg.confirm!(:response_body => 'Job discared due to filter')
           return # short circuit
         end
+      elsif(m[:message][:query][:tags])
+        unless(payload['ref'].start_with('refs/tags'))
+          warn "Discarding #{msg} due to non tag type event (tag builds enabled). ref: #{payload['ref']}"
+          msg.confirm!(:response_body => 'Job discarded due to non-tag type event')
+          return # short circuit
+        end
+      else
+        # detect this is a commit push type event
+        unless(payload['ref'].start_with('refs/heads'))
+          warn "Discarding #{msg} due to non commit type event. ref: #{payload['ref']}"
+          msg.confirm!(:response_body => 'Job discarded due to non-commit type event')
+          return # short circuit
+        end
       end
       payload = Fission::Utils.new_payload(job_name, :github => payload)
       debug "Processing payload: #{payload}"
