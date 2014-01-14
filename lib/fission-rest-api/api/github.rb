@@ -29,6 +29,7 @@ Carnivore::PointBuilder.define do
         end
       end
       payload = Fission::Utils.new_payload(job_name, :github => payload)
+      payload[:data][:github_status] = :state => :pending
       debug "Processing payload: #{payload}"
       Fission::Utils.transmit(job_name, payload)
       msg.confirm!(:response_body => 'Job submitted for build')
