@@ -3,8 +3,11 @@ require 'fission/utils'
 
 Carnivore::PointBuilder.define do
 
-  post %r{/github-commit/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, *args|
+  post %r{/github-commit(/\w+/?)?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, action|
     begin
+      if(action)
+        action = action.gsub('/', '').to_sym
+      end
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
       payload = MultiJson.load(msg[:message][:query][:payload] || msg[:message][:body])
       if(filter = msg[:message][:query][:filter])
@@ -30,6 +33,7 @@ Carnivore::PointBuilder.define do
       end
       payload = Fission::Utils.new_payload(job_name, :github => payload)
       payload[:data][:github_status] = {:state => :pending}
+      payload[:data][:router] = {:action => action}
       debug "Processing payload: #{payload}"
       Fission::Utils.transmit(job_name, payload)
       msg.confirm!(:response_body => 'Job submitted for build')
