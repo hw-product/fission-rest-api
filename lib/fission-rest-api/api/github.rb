@@ -3,7 +3,7 @@ require 'fission/utils'
 
 Carnivore::PointBuilder.define do
 
-  post %r{/github-commit(/\w+/?)?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, action|
+  post %r{/github-commit/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, path, action|
     begin
       if(action)
         action = action.gsub('/', '').to_sym
@@ -36,7 +36,7 @@ Carnivore::PointBuilder.define do
       payload[:data][:router] = {:action => action}
       debug "Processing payload: #{payload}"
       Fission::Utils.transmit(job_name, payload)
-      msg.confirm!(:response_body => 'Job submitted for build')
+      msg.confirm!(:response_body => 'Job submitted for processing!')
     rescue MultiJson::DecodeError
       error "Failed to parse JSON from request (#{msg})"
       debug "M: #{msg[:message].inspect}"
