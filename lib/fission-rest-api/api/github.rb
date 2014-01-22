@@ -18,7 +18,13 @@ Carnivore::PointBuilder.define do
           return # short circuit
         end
       elsif(msg[:message][:query][:tags])
-        unless(payload['ref'].start_with?('refs/tags'))
+        if(payload['ref'].start_with?('refs/tags'))
+          if(payload['deleted'] == true)
+            warn "Discarding #{msg} due to tag destruction type event (tag builds enabled). ref: #{payload['ref']}"
+            msg.confirm!(:response_body => 'Job discarded due to non-create type tag event')
+            return # short circuit
+          end
+        else
           warn "Discarding #{msg} due to non tag type event (tag builds enabled). ref: #{payload['ref']}"
           msg.confirm!(:response_body => 'Job discarded due to non-tag type event')
           return # short circuit
