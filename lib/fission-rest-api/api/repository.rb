@@ -2,7 +2,7 @@ require 'base64'
 require 'fission/utils'
 
 Carnivore::PointBuilder.define do
-  get %r{/repository/.+}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api_repository) || 1 do |msg, path|
+  get %r{/repository/.+}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :repository) || 1 do |msg, path|
     authorization = msg[:message][:request].headers['Authorization']
     if(authorization)
       acct, token_string = Base64.decode64(authorization.split(' ').last.to_s).split(':')
