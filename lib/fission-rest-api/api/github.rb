@@ -3,7 +3,7 @@ require 'fission/utils'
 
 Carnivore::PointBuilder.define do
 
-  post %r{/github-commit/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :github_commit) || 1 do |msg, path, action|
+  post %r{/github-commit/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github_commit) || 1 do |msg, path, action|
     begin
       if(action)
         action = action.gsub('/', '').to_sym
