@@ -1,3 +1,4 @@
+require 'uri'
 require 'base64'
 require 'fission/utils'
 
@@ -13,38 +14,34 @@ Carnivore::PointBuilder.define do
         @connections[Thread.current.object_id] ||= {}
         @connections[Thread.current.object_id][acct] ||= {}
         con_cache = @connections[Thread.current.object_id][acct]
-        if(path.include?('/packages/'))
-          s3_store = con_cache[:packages] || Fission::Assets::Store.new
-          con_cache[:packages] = s3_store
-          path = File.join(Carnivore::Config.get(:fission, :repository_generator, :key_prefix).to_s, path.slice(path.index('packages/'), path.length))
-        else
-          creds = Carnivore::Config.get(:fission, :repository_publisher, :credentials)
-          if(bucket.include?('.'))
-            creds = creds.merge(:path_style => true)
-            creds.delete(:region)
-          end
-          s3_store = con_cache[:repository] || Fission::Assets::Store.new(creds.merge(:bucket => bucket))
-          con_cache[:repository] = s3_store
-          path.sub!(/\/?repository\//, '')
+        creds = Carnivore::Config.get(:fission, :repository_publisher, :credentials)
+        if(bucket.include?('.'))
+          creds = creds.merge(:path_style => true)
+          creds.delete(:region)
         end
+        s3_store = con_cache[:repository] || Fission::Assets::Store.new(creds.merge(:bucket => bucket))
+        con_cache[:repository] = s3_store
         begin
-          streaming = false
-          asset = s3_store.get(path.sub(/^\//, '')) do |chunk|
-            unless(streaming)
-              msg[:message][:request].respond(:ok, :transfer_encoding => :chunked)
-              streaming = true
+          if(Carnivore::Config.get(:fission, :rest_api, :repository, :stream))
+            debug "Streaming repository asset file: #{path}"
+            streaming = false
+            asset = s3_store.get(path.sub(/^\//, '')) do |chunk|
+              unless(streaming)
+                msg[:message][:request].respond(:ok, :transfer_encoding => :chunked)
+                streaming = true
+              end
+              msg[:message][:request] << chunk
             end
-            msg[:message][:request] << chunk
+            msg[:message][:request].finish_response
+            asset.close unless asset.closed?
+            asset.delete
+          else
+            debug "Providing remote redirect for repository asset file: #{path}"
+            asset_url = s3_store.url(path.sub(/^\//, ''), 120)
+            asset_url = URI.parse(asset_url)
+            asset_url.host = bucket
+            msg.confirm!(:code => :found, 'Location' => asset_url.to_s)
           end
-          msg[:message][:request].finish_response
-          # NOTE: apt should support 302 headers with Location but it
-          # continually errors out :|
-#          asset_url = s3_store.url(path.sub(/^\//, ''), 120)
-#          warn " --------------> URL: #{asset_url.inspect}"
-#          msg.confirm!(:code => :found, 'Location' => asset_url) #s3_store.url(path.sub(/^\//, ''), 120))
-          asset.close unless asset.closed?
-          asset.delete
-          info "Streamed object asset: #{path}"
         rescue Fission::Assets::Error::NotFound => e
           warn "Failed to locate requested path: #{e}"
           msg.confirm!(:code => :not_found)
