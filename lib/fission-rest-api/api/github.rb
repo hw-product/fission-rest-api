@@ -1,7 +1,7 @@
 require 'multi_json'
 require 'fission'
 
-Carnivore::PointBuilder.define do
+Carnivore::Http::PointBuilder.define do
 
   post %r{/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
@@ -22,7 +22,7 @@ Carnivore::PointBuilder.define do
       end
       valid.push(true) if valid.empty? && job_name
       if(valid.include?(true))
-        payload = Fission::Utils.new_payload(job_name, :github => payload)
+        payload = Fission::Utils.new_payload(job_name || 'router', :github => payload)
         payload[:source] = :github
         payload[:data][:github_status] = {:state => :pending}
         payload[:data][:router] = {:action => action}
