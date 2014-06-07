@@ -28,9 +28,18 @@ Carnivore::Http::PointBuilder.define do
         payload[:data][:router] = {:action => action}
         debug "Processing payload: #{payload}"
         Fission::Utils.transmit(job_name || :router, payload)
-        msg.confirm!(:response_body => 'Job submitted for processing!')
+        msg.confirm!(
+          :response_body => MultiJson.dump(
+            :message => 'Job submitted for processing!',
+            :job_id => payload[:message_id]
+          )
+        )
       else
-        msg.confirm!(:response_body => 'Job discarded due to filter')
+        msg.confirm!(
+          :response_body => MutliJson.dump(
+            :message => 'Job discarded due to filter'
+          )
+        )
       end
     rescue MultiJson::DecodeError
       error "Failed to parse JSON from request (#{msg})"
