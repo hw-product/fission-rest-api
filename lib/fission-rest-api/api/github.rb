@@ -3,7 +3,7 @@ require 'fission'
 
 Carnivore::Http::PointBuilder.define do
 
-  post %r{/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
+  post %r{/v1/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
       action = action.tr('/', '').to_sym
       payload = Smash.new(MultiJson.load(msg[:message][:query][:payload] || msg[:message][:body]))
