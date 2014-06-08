@@ -3,13 +3,18 @@ require 'base64'
 require 'fission/utils'
 
 Carnivore::PointBuilder.define do
-  get %r{/repository/.+}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :repository) || 1 do |msg, path|
+
+  # Serve the repository
+  get %r{/v1/repository/.+}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :repository) || 1 do |msg, path|
+    # remove versioning
+    path.sub!('/v1', '')
     authorization = msg[:message][:request].headers['Authorization']
     if(authorization)
-      acct, token_string = Base64.decode64(authorization.split(' ').last.to_s).split(':')
+      token_string = Base64.decode64(authorization.split(' ').last.to_s).split(':').first
       token = Fission::Data::Token.find_by_token(token_string)
       bucket = msg[:message][:request].headers['Host'].to_s.split(':').first
-      if(token && token.account.name == acct)
+      if(token)
+        acct = token.account.name
         @connections ||= {}
         @connections[Thread.current.object_id] ||= {}
         @connections[Thread.current.object_id][acct] ||= {}
@@ -51,6 +56,48 @@ Carnivore::PointBuilder.define do
       end
     else
       msg.confirm!(:code => :unauthorized, 'WWW-Authenticate' => 'Basic realm="Restricted storage"')
+    end
+  end
+
+  # Accept files
+  post '/v1/repository_push', :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :repository_packages) || 1 do |msg, path|
+    authorization = msg[:message][:request].headers['Authorization']
+    if(authorization)
+      token_string, _ = Base64.decode64(authorization.split(' ').last.to_s).split(':')
+    end
+    if(token_string)
+      token = Fission::Data::Token.find_by_token(token_string)
+      if(token)
+        unless(@asset_store)
+          @asset_store = Fission::Assets::Store.new
+        end
+        key = File.join('repository-push-tmp', "#{Celluloid.uuid}.pkg")
+        @asset_store.put(key, msg[:message][:body])
+        job_name = Carnivore::Config.get(:fission, :rest_api, :repository_push, :job) || 'router'
+        data = Smash.new(
+          :asset_key => key,
+          :account_id => token.account.id
+        )
+        payload = Fission::Utils.new_payload(job_name || 'router', :repository_push => data)
+        if(job_name == 'router')
+          payload.set(:data, :router, :action, 'repository_push')
+        end
+        debug "Processing payload: #{payload}"
+        Fission::Utils.transmit(job_name || :router, payload)
+        msg.confirm!(
+          :response_body => MultiJson.dump(
+            :message => 'Package submitted for publishing!',
+            :job_id => payload[:message_id]
+          )
+        )
+      else
+        msg.confirm!(:code => :unauthorized)
+      end
+    else
+      msg.confirm!(:code => :unauthorized, 'WWW-Authenticate' => 'Basic realm="Restricted access"')
+    end
+
+
     end
   end
 end
