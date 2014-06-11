@@ -97,7 +97,5 @@ Carnivore::PointBuilder.define do
       msg.confirm!(:code => :unauthorized, 'WWW-Authenticate' => 'Basic realm="Restricted access"')
     end
 
-
-    end
   end
 end
