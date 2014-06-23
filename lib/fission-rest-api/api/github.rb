@@ -6,7 +6,10 @@ Carnivore::Http::PointBuilder.define do
   post %r{/v1/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
       action = action.tr('/', '').to_sym
-      payload = Smash.new(MultiJson.load(msg[:message][:query][:payload] || msg[:message][:body]))
+      data = msg[:message][:query][:payload] ||
+        msg[:message][:body].is_a?(Hash) ? msg[:message][:body][:payload] : msg[:message][:body]
+      payloads = MultiJson.load(data)
+      payload = [payloads].flatten(1).first.to_smash
       debug "Payload to process: #{payload.inspect}"
       payload[:github_event] = msg[:message][:headers]['X-GitHub-Event']
       payload[:github_delivery] = msg[:message][:headers]['X-GitHub-Delivery']
@@ -62,7 +65,10 @@ Carnivore::Http::PointBuilder.define do
         action = action.gsub('/', '').to_sym
       end
       job_name = Carnivore::Config.get(:fission, :rest_api, :github_commit, :job_name) || :router
-      payload = Smash.new(MultiJson.load(msg[:message][:query][:payload] || msg[:message][:body]))
+      data = msg[:message][:query][:payload] ||
+        msg[:message][:body].is_a?(Hash) ? msg[:message][:body][:payload] : msg[:message][:body]
+      payloads = MultiJson.load(data)
+      payload = [payloads].flatten(1).first.to_smash
       payload[:source] = :github
       payload[:github_event] = msg[:message][:headers]['X-GitHub-Event']
       payload[:github_delivery] = msg[:message][:headers]['X-GitHub-Delivery']
