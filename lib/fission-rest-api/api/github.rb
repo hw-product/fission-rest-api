@@ -6,10 +6,12 @@ Carnivore::Http::PointBuilder.define do
   post %r{/v1/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
       action = action.tr('/', '').to_sym
-      data = msg[:message][:query][:payload] ||
-        msg[:message][:body].is_a?(Hash) ? msg[:message][:body][:payload] : msg[:message][:body]
-      payloads = MultiJson.load(data)
-      payload = [payloads].flatten(1).first.to_smash
+      data = msg[:message].fetch(
+        :query, :payload,
+        msg[:message][:body]
+      )
+      data = data[:payload] if data[:payload]
+      payload = [data].flatten(1).first.to_smash
       debug "Payload to process: #{payload.inspect}"
       payload[:github_event] = msg[:message][:headers]['X-GitHub-Event']
       payload[:github_delivery] = msg[:message][:headers]['X-GitHub-Delivery']
