@@ -41,7 +41,7 @@ Carnivore::Http::PointBuilder.define do
         )
       else
         msg.confirm!(
-          :response_body => MutliJson.dump(
+          :response_body => MultiJson.dump(
             :message => 'Job discarded due to filter'
           )
         )
