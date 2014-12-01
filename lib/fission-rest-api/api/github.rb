@@ -5,7 +5,6 @@ Carnivore::Http::PointBuilder.define do
 
   post %r{/v1/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
-      action = action.tr('/', '').to_sym
       data = msg[:message].fetch(
         :query, :payload,
         msg[:message][:body]
@@ -29,8 +28,13 @@ Carnivore::Http::PointBuilder.define do
       if(valid.include?(true))
         payload = Fission::Utils.new_payload(job_name || 'router', :github => payload)
         payload[:source] = :github
-        payload[:data][:github_status] = {:state => :pending}
-        payload[:data][:router] = {:action => action}
+        payload.set(
+          :data, :rest_api, Smash.new(
+            :action => action,
+            :params => msg[:message][:query],
+            :headers => Smash[msg[:message][:headers].map{|k,v| [k.downcase.tr('-', '_'), v]}]
+          )
+        )
         debug "Processing payload: #{payload}"
         Fission::Utils.transmit(job_name || :router, payload)
         msg.confirm!(
