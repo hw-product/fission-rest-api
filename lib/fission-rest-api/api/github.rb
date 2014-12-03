@@ -26,8 +26,13 @@ Carnivore::Http::PointBuilder.define do
       if(valid.include?(true))
         payload = Fission::Utils.new_payload(job_name || 'router', :github => payload)
         payload[:source] = :github
-        payload[:data][:github_status] = {:state => :pending}
-        payload[:data][:router] = {:action => action}
+        payload.set(
+          :data, :rest_api, Smash.new(
+            :action => action,
+            :params => msg[:message][:query],
+            :headers => Smash[msg[:message][:headers].map{|k,v| [k.downcase.tr('-', '_'), v]}]
+          )
+        )
         debug "Processing payload: #{payload}"
         Fission::Utils.transmit(job_name || :router, payload)
         msg.confirm!(
@@ -38,7 +43,7 @@ Carnivore::Http::PointBuilder.define do
         )
       else
         msg.confirm!(
-          :response_body => MutliJson.dump(
+          :response_body => MultiJson.dump(
             :message => 'Job discarded due to filter'
           )
         )
