@@ -13,5 +13,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'carnivore-http'
 #  s.add_dependency 'http' # <<---- This should NOT be needed but is
   # for java lib being dumb in deps
-  s.files = Dir['**/*']
+  s.files = Dir['{lib}/**/**/*'] + %w(fission-rest-api.gemspec README.md CHANGELOG.md)
 end
