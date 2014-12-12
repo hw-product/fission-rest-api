@@ -5,7 +5,13 @@ Carnivore::Http::PointBuilder.define do
 
   post %r{/v1/github/?(\w+)?/?}, :workers => Carnivore::Config.get(:fission, :workers, :rest_api, :github) || 1 do |msg, path, action|
     begin
-      action = action.to_s.tr('/', '').to_sym
+      data = msg[:message].fetch(
+        :query, :payload,
+        msg[:message][:body]
+      )
+      data = data[:payload] if data[:payload]
+      payload = [data].flatten(1).first.to_smash
+
       data = msg[:message].fetch(:query, :payload, msg[:message][:body])
       payloads = data.is_a?(Hash) || data.is_a?(Array) ? data : MultiJson.load(data)
       payload = [payloads].flatten(1).first.to_smash
