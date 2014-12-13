@@ -1,0 +1,7 @@
+require 'fission'
+
+Carnivore::Http::PointBuilder.define do
+  get '/status' do |msg, path|
+    msg.confirm!(:response_body => 'OK!')
+  end
+end
