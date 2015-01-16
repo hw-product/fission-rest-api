@@ -22,10 +22,10 @@ Carnivore::Http::PointBuilder.define do
         Carnivore::Config.get(:fission, :rest_api, :github, :job, :default)
       valid = [].tap do |results|
         if(filter = msg[:message][:query][:filter])
-          results.push payload[:ref].end_with?(filter)
+          results.push payload[:ref].to_s.end_with?(filter)
         end
         if(msg[:message][:query][:tags])
-          results.push (payload[:ref].start_with?('refs/tags') || payload[:ref_type] == 'tag') && !payload[:deleted]
+          results.push (payload[:ref].to_s.start_with?('refs/tags') || payload[:ref_type] == 'tag') && !payload[:deleted]
         end
       end
       valid.push(true) if valid.empty? && job_name
