@@ -1,2 +1,2 @@
 require 'fission-rest-api/version'
-require 'fission-rest-api/runner'
+require 'fission-rest-api/repository'
