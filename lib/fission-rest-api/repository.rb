@@ -1,7 +1,7 @@
 require 'fission-rest-api'
 
 module Fission
-  module RestRepo
+  module RestApi
 
     class Repository < Fission::Callback
 
@@ -31,7 +31,7 @@ module Fission
             path = parse_path(message[:message][:request].path)
             asset_key = File.join('repositories', info[:account_name], path[:_leftovers])
             info "Processing repository request for `#{info[:account_name]}` for item: #{asset_key}"
-            if(config[:stream])
+            if(config.get(:repository, :stream)
               debug "Delivery of asset `#{asset_key}` via stream"
               begin
                 message[:message][:request].respond(:ok, :transfer_encoding => :chunked)
@@ -65,4 +65,4 @@ module Fission
   end
 end
 
-Fission.register(:rest_repo, :repository, Fission::RestRepo::Repository)
+Fission.register(:rest_api, :repository, Fission::RestApi::Repository)
