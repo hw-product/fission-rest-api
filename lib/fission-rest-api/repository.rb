@@ -7,7 +7,7 @@ module Fission
 
       PATH_PARTS = ':action'
 
-      include Fission::Utils::RestApi
+      include Fission::RestApi::Helpers
 
       # Determine validity of message
       #
