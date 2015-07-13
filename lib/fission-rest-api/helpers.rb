@@ -34,7 +34,7 @@ module Fission
           Smash.new(:account_name => :auth_disabled)
         else
           r_token = request.fetch(:authentication, {}).values.detect do |item|
-            !item.to_s.empty?
+            !item.to_s.empty? && item.to_s != 'd2o-token'
           end
           token = Fission::Data::Models::Token.find_by_token(r_token)
           if(token)
