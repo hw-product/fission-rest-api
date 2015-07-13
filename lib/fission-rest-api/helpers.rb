@@ -18,7 +18,7 @@ module Fission
             end
           end.compact.zip(request_parts)
         ]
-        remaining = request_parts - items.keys
+        remaining = request_parts - items.values
         unless(remaining.empty?)
           items[:_leftover] = remaining.join('/')
         end
