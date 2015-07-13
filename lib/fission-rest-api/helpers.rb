@@ -30,10 +30,10 @@ module Fission
       # @param request [Hash]
       # @return [Hash] {:account}
       def token_lookup(request)
-        if(disabled?(:rest_authentication))
+        unless(config.fetch(:rest_authentication, true))
           Smash.new(:account_name => :auth_disabled)
         else
-          r_token = request[:authentication].values.detect do |item|
+          r_token = request.fetch(:authentication, {}).values.detect do |item|
             !item.to_s.empty?
           end
           token = Fission::Data::Models::Token.find_by_token(r_token)
