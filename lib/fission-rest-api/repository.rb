@@ -27,26 +27,34 @@ module Fission
       def execute(message)
         failure_wrap(message) do |_|
           info = token_lookup(message[:message][:request])
-          unless(info.empty?)
+          unless(info.empty? && info[:account_name])
             path = parse_path(message[:message][:request].path)
-            asset_key = File.join('repositories', info[:account_name], path[:_leftovers])
-            info "Processing repository request for `#{info[:account_name]}` for item: #{asset_key}"
-            if(config.get(:repository, :stream)
-              debug "Delivery of asset `#{asset_key}` via stream"
-              begin
-                message[:message][:request].respond(:ok, :transfer_encoding => :chunked)
-                asset_store.get(asset_key) do |chunk|
-                  message[:message][:request] << chunk
-                end
-              ensure
-                message[:message][:request].finish_response
-              end
+            if(info[:account_name] == :auth_disabled)
+              asset_key = File.join('repositories', path[:_leftovers].to_s)
             else
-              debug "Delivery of asset `#{asset_key}` via 302 redirect"
-              message.confirm!(
-                :code => :found,
-                'Location' => asset_store.url(asset_key)
-              )
+              asset_key = File.join('repositories', info[:account_name], path[:_leftovers].to_s)
+            end
+            info "Processing repository request for `#{info[:account_name]}` for item: #{asset_key}"
+            begin
+              if(config.get(:repository, :stream))
+                debug "Delivery of asset `#{asset_key}` via stream"
+                begin
+                  message[:message][:request].respond(:ok, :transfer_encoding => :chunked)
+                  asset_store.get(asset_key) do |chunk|
+                    message[:message][:request] << chunk
+                  end
+                ensure
+                  message[:message][:request].finish_response
+                end
+              else
+                debug "Delivery of asset `#{asset_key}` via 302 redirect"
+                message.confirm!(
+                  :code => :found,
+                  'Location' => asset_store.url(asset_key)
+                )
+              end
+            rescue Jackal::Assets::Error::NotFound
+              message.confirm!(:code => :not_found)
             end
           else
             if(message[:message][:request][:authentication].empty?)
