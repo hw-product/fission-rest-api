@@ -30,21 +30,23 @@ module Fission
           if(!info.empty? && info[:account_name])
             path = parse_path(message[:message][:request].path)
             if(info[:account_name] == :auth_disabled)
-              asset_key = File.join('repositories', path[:_leftovers].to_s)
+              asset_key = File.join('published-repositories', path[:_leftover].to_s)
             else
-              asset_key = File.join('repositories', info[:account_name], path[:_leftovers].to_s)
+              asset_key = File.join('published-repositories', info[:account_name], path[:_leftover].to_s)
             end
             info "Processing repository request for `#{info[:account_name]}` for item: #{asset_key}"
             begin
-              if(config.get(:repository, :stream))
+              if(true) #config.get(:repository, :stream))
                 debug "Delivery of asset `#{asset_key}` via stream"
                 begin
                   message[:message][:request].respond(:ok, :transfer_encoding => :chunked)
+                  sleep(0.3)
                   asset_store.get(asset_key) do |chunk|
                     message[:message][:request] << chunk
                   end
                 ensure
                   message[:message][:request].finish_response
+                  message[:message][:connection].close
                   message[:message][:confirmed] = true
                 end
               else
@@ -55,7 +57,10 @@ module Fission
                 )
               end
             rescue Jackal::Assets::Error::NotFound
-              message.confirm!(:code => :not_found)
+              message.confirm!(
+                :code => :not_found,
+                :response_body => 'File not found!'
+              )
             end
           else
             if(message[:message][:authentication].empty?)
