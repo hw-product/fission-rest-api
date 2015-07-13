@@ -18,7 +18,7 @@ module Fission
             end
           end.compact.zip(request_parts)
         ]
-        remaining = request_parts - items
+        remaining = request_parts - items.keys
         unless(remaining.empty?)
           items[:_leftover] = remaining.join('/')
         end
@@ -31,7 +31,7 @@ module Fission
       # @return [Hash] {:account}
       def token_lookup(request)
         if(disabled?(:rest_authentication))
-          Smash.new(:account_name => '~_auth_disabled_~')
+          Smash.new(:account_name => :auth_disabled)
         else
           r_token = request[:authentication].values.detect do |item|
             !item.to_s.empty?
