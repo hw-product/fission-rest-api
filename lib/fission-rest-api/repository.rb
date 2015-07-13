@@ -36,11 +36,11 @@ module Fission
             end
             info "Processing repository request for `#{info[:account_name]}` for item: #{asset_key}"
             begin
-              if(true) #config.get(:repository, :stream))
+              if(config.fetch(:repository, :stream, true))
                 debug "Delivery of asset `#{asset_key}` via stream"
+                asset_store.url(asset_key) # force error if 404
                 begin
                   message[:message][:request].respond(:ok, :transfer_encoding => :chunked)
-                  sleep(0.3)
                   asset_store.get(asset_key) do |chunk|
                     message[:message][:request] << chunk
                   end
