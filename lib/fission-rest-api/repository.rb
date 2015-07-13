@@ -26,8 +26,8 @@ module Fission
       # @param message [Carnviore::Message]
       def execute(message)
         failure_wrap(message) do |_|
-          info = token_lookup(message[:message][:request])
-          unless(info.empty? && info[:account_name])
+          info = token_lookup(message[:message])
+          if(!info.empty? && info[:account_name])
             path = parse_path(message[:message][:request].path)
             if(info[:account_name] == :auth_disabled)
               asset_key = File.join('repositories', path[:_leftovers].to_s)
@@ -45,6 +45,7 @@ module Fission
                   end
                 ensure
                   message[:message][:request].finish_response
+                  message[:message][:confirmed] = true
                 end
               else
                 debug "Delivery of asset `#{asset_key}` via 302 redirect"
@@ -57,13 +58,16 @@ module Fission
               message.confirm!(:code => :not_found)
             end
           else
-            if(message[:message][:request][:authentication].empty?)
+            if(message[:message][:authentication].empty?)
+              info "Access denied for request (no credentials provided): #{message[:message][:connection].remote_addr} to #{message[:message][:request].path}"
               message.confirm!(
                 :code => :unauthorized,
-                'WWW-Authenticate' => 'Basic realm="Restricted storage"'
+                'WWW-Authenticate' => 'Basic realm="Restricted storage"',
+                :response_body => 'Access denied! [credentials required]'
               )
             else
-              message.confirm!(:code => :unauthorized)
+              info "Access denied for request (invalid credentials): #{message[:message][:connection].remote_addr} to #{message[:message][:request].path}"
+              message.confirm!(:code => :unauthorized, :response_body => 'Access denied! [invalid credentials]')
             end
           end
         end
