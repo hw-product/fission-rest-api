@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.homepage = 'http://github.com/heavywater/fission-rest-api'
   s.description = 'Fission REST API'
   s.require_path = 'lib'
-  s.add_dependency 'fission'
+  s.add_dependency 'fission', '>= 0.3.0', '< 1.0'
   s.add_dependency 'carnivore-http'
 #  s.add_dependency 'http' # <<---- This should NOT be needed but is
   # for java lib being dumb in deps
