@@ -1,3 +1,7 @@
+# v0.2.0
+* Update minimum fission constraint
+* Use common methods from Carnivore
+
 # v0.1.10
 * Refactor and disable all previous API endpoints
 * Assume usage of `http_paths` style sources
