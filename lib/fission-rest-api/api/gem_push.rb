@@ -9,7 +9,7 @@ Carnivore::Http::PointBuilder.define do
         unless(@asset_store)
           @asset_store = Fission::Assets::Store.new
         end
-        key = File.join('gem-push-tmp', "#{Celluloid.uuid}.gem")
+        key = File.join('gem-push-tmp', "#{Carnivore.uuid}.gem")
         @asset_store.put(key, msg[:message][:body])
         job_name = Carnivore::Config.get(:fission, :rest_api, :gem_push, :job) || 'router'
         data = Smash.new(

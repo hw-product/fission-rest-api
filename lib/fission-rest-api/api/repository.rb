@@ -71,7 +71,7 @@ Carnivore::PointBuilder.define do
         unless(@asset_store)
           @asset_store = Fission::Assets::Store.new
         end
-        key = File.join('repository-push-tmp', "#{Celluloid.uuid}.pkg")
+        key = File.join('repository-push-tmp', "#{Carnivore.uuid}.pkg")
         @asset_store.put(key, msg[:message][:body])
         job_name = Carnivore::Config.get(:fission, :rest_api, :repository_push, :job) || 'router'
         data = Smash.new(
